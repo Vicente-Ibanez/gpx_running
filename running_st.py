@@ -44,7 +44,8 @@ gdf = data.copy()
 gdf["id"] = gdf.index
 gdf["id"] = gdf["id"].astype(str)
 
-s2 = gpd.read_file('/data/streamlit_data/myfile.geojson.geojson', driver='GeoJSON')
+s2 = gpd.read_file('data/streamlit_data/myfile.geojson', driver='GeoJSON')
+
 
 gdf2 = gdf[["speed", "id", "geometry"]].copy()
 
