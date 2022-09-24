@@ -8,4 +8,10 @@ from extract import (
     extract
 )
 
+from quick_startup import (
+    quick_startup
+)
 
+from map_startup import (
+    map_create
+)
