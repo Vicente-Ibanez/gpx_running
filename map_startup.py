@@ -40,7 +40,7 @@ def map_create():
         id_spot["properties"]["name"] = str(id_spot["id"])
 
     # open a new geojson file and write the current one into it
-    with open('/data/streamlit_data/myfile.geojson.geojson', 'w') as f:
+    with open('data/streamlit_data/myfile.geojson', 'w') as f:
         dump(s, f)
 
     # Convert index to an id column to be used to merge dfs
@@ -89,4 +89,4 @@ def map_create():
 
     # st_data = st_folium(map1, width=500, height=500)
     # save map to html file
-    map1.save('index.html')
+    map1.save('data/streamlit_data/index.html')
