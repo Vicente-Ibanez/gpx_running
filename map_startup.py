@@ -26,6 +26,11 @@ from quick_startup import quick_startup
 def map_create(map_type):
     # Get the data from the data file and transform it into the correct format
     data = quick_startup()
+    # data 
+    # print(data["cadence"])
+
+    data["cadence"] = data["cadence"].fillna(0)
+    data["cadence"] = data["cadence"].astype(float)
 
     # Copy the data and use the copied version
     gdf = data.copy()
@@ -51,7 +56,7 @@ def map_create(map_type):
     s2 = gpd.read_file('data/streamlit_data/myfile.geojson', driver='GeoJSON')
 
     
-        # use only certain column from the data file
+    # use only certain column from the data file
     gdf2 = gdf[[map_type, "id", "geometry"]].copy()
 
     # Merge the two dfs (df and geojson)
@@ -59,11 +64,11 @@ def map_create(map_type):
 
     # get min and max of geojsons, cutting off obsurities/annolimies
     min, max = gdf2[map_type].quantile([0.1,0.9]).apply(lambda x: round(x, 2))
-
+    print(min, "     ", max)
     # Set color map based on distribution of speed
     colormap = branca.colormap.LinearColormap(
         colors=['black', '#ecca00','#ec9b00','#ec5300','#ec2400', '#ec0000'],
-        index=gdf2[map_type].quantile([.01, 0.2,0.4,0.6,0.8]),
+        index=gdf2[map_type].quantile([.01,0.2,0.4,0.6,0.8]),
         vmin=min,
         vmax=max
     )
@@ -86,13 +91,13 @@ def map_create(map_type):
                                 'weight':3, 'fillOpacity':0.5
                                 }
                             ).add_to(map1)
-
+   
     # Add a LayerControl
     folium.LayerControl().add_to(map1)
-
+   
     # And the Color Map legend
     colormap.add_to(map1)
-
+   
     # Save with descriptive name
     if map_type == "speed":
         # save map to html file
@@ -100,3 +105,4 @@ def map_create(map_type):
     else:
         # save map to html file
         map1.save('data/streamlit_data/index_cadence.html')
+        # pass

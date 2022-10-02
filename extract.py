@@ -17,7 +17,7 @@ import plotly.express as px
 
 import warnings
 
-from shapely.errors import ShapelyDeprecationWarning
+# from shapely.errors import ShapelyDeprecationWarning
 
 
 from file_utilities import(
@@ -71,6 +71,13 @@ def extract(data, file):
         print("This file has no gps data: ", file)
         return pd.DataFrame(cols=cols)
 
+    m_s = data["speed"].isna().sum() 
+    # # # m_g = data["geometry"].isna().sum()
+    if m_s > 0:
+        print(file, " came in with ", m_s, " missing speed fields.")
+
+    # create a unique identifyer (type) using the start date/time as a primary key
+    data["type"] = str(data["timestamp"][0])
 
     # Change timestamp into MM/DD/YYYY/HH/MM/SS
     data["datetime"] = data["timestamp"].apply(garmin_time_change)
@@ -98,20 +105,31 @@ def extract(data, file):
     gdf_copy["finish"] = [xy for xy in zip(gdf_copy.longitude_2, gdf_copy.latitude_2)]
 
     # Ignore the deprecation warning as shapely 2.0 isnt being used
-    warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+    # warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
     # changed the two coordinates into a line
     gdf_copy["geometry"] = gdf_copy.apply(lambda x: LineString([x.start, x.finish]), axis=1)
-    warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+    # warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
     
-    # create a unique identifyer (type) using the start date/time as a primary key
-    gdf_copy["type"] = str(gdf_copy["datetime"][0])
+    # # create a unique identifyer (type) using the start date/time as a primary key
+    # gdf_copy["type"] = str(gdf_copy["datetime"][0])
 
     # Convert speed from meters/second to miles/hour
     gdf_copy["speed"] = gdf_copy["speed"].apply(lambda x: x*2.236936)
-    # Create a column for speed with rounded values to help plotting
-    gdf_copy["Pace Mi/Hr"] = gdf_copy.speed.apply(number_rounder)
+    # Changes speed to be rounded values to help plotting
+    # gdf_copy["speed"] = gdf_copy.speed.apply(number_rounder)
+   
+    gdf_copy = gdf_copy.reset_index(drop=True)
+
+    gdf_copy["cadence"] = gdf_copy["cadence"].fillna(0)
+    gdf_copy["cadence"] = gdf_copy["cadence"].astype(float)
+
     # check if any speed or geometry values are missing
-    if gdf_copy["speed"].isna().sum() > 0 or gdf_copy["geometry"].isna().sum():
-        print(file, " has missing speed values")
+    m_s = gdf_copy["speed"].isna().sum() 
+    m_g = gdf_copy["geometry"].isna().sum()
+    if gdf_copy["speed"].isna().sum() > 0:
+        print(file, " has ", m_s,  " missing speed values")
+
+    if gdf_copy["geometry"].isna().sum() > 0:
+        print(file, " has ", m_g, " missing geometry values")
 
     return gdf_copy
