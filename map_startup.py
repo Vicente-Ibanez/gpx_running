@@ -105,4 +105,4 @@ def map_create(map_type):
     else:
         # save map to html file
         map1.save('data/streamlit_data/index_cadence.html')
-        # pass
+        
