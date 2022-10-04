@@ -13,7 +13,7 @@ map_type = st.sidebar.selectbox(
     ("speed", "cadence")
 )
 
-st.write(map_type)
+# st.write(map_type)
 
 
 def generate_map(map_type):
