@@ -1,4 +1,4 @@
-import folium
+# import folium
 from folium.plugins import Search
 
 import pandas as pd
@@ -77,7 +77,7 @@ def map_create(map_type):
     if map_type == "speed":
         colormap.caption="Speed Mi/Hr"
     else:
-        colormap.caption="Steps/Second"
+        colormap.caption="Steps/Min"
 
     # Create map with initial location
     map1 = folium.Map(location=[43.7696, 11.2558], zoom_start=12)
