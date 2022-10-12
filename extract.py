@@ -17,9 +17,6 @@ import plotly.express as px
 
 import warnings
 
-# from shapely.errors import ShapelyDeprecationWarning
-
-
 from file_utilities import(
     garmin_time_change,
     point_converter,
@@ -103,20 +100,13 @@ def extract(data, file):
     # Convert the coordinates into x, y coords
     gdf_copy["start"] = [xy for xy in zip(gdf_copy.longitude, gdf_copy.latitude)]
     gdf_copy["finish"] = [xy for xy in zip(gdf_copy.longitude_2, gdf_copy.latitude_2)]
-
-    # Ignore the deprecation warning as shapely 2.0 isnt being used
-    # warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+    
     # changed the two coordinates into a line
     gdf_copy["geometry"] = gdf_copy.apply(lambda x: LineString([x.start, x.finish]), axis=1)
-    # warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
-    
-    # # create a unique identifyer (type) using the start date/time as a primary key
-    # gdf_copy["type"] = str(gdf_copy["datetime"][0])
 
     # Convert speed from meters/second to miles/hour
     gdf_copy["speed"] = gdf_copy["speed"].apply(lambda x: x*2.236936)
     # Changes speed to be rounded values to help plotting
-    # gdf_copy["speed"] = gdf_copy.speed.apply(number_rounder)
    
     gdf_copy = gdf_copy.reset_index(drop=True)
 
