@@ -1,6 +1,5 @@
 from lib2to3.pytree import generate_matches
 import streamlit as st
-from streamlit_folium import st_folium
 import streamlit.components.v1 as components
 
 from map_startup import map_create
