@@ -1,4 +1,4 @@
-# import folium
+import folium
 from folium.plugins import Search
 
 import pandas as pd
