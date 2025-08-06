@@ -1,13 +1,8 @@
 import pandas as pd
 import geopandas as gpd
-import numpy as np
-import matplotlib.pyplot as plt
 import os
-import json
 import folium
-import branca
 from shapely.geometry import Point
-from geojson import Feature, FeatureCollection, dump
 
 root_path = os.path.dirname(os.path.dirname(__file__))
 DATA_PATH = "/data/input"
@@ -67,8 +62,6 @@ def preprocess_df(df):
     print("🔄 Preprocessing dataframe...")
     
     # Convert coordinates to float
-    # df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-    # df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
     df['speed'] = pd.to_numeric(df['speed'], errors='coerce')
     df['cadence'] = pd.to_numeric(df['cadence'], errors='coerce')
     df['distance'] = pd.to_numeric(df['distance'], errors='coerce')
@@ -98,7 +91,7 @@ def preprocess_df(df):
         lower = Q1 - 1.5 * IQR
         upper = Q3 + 1.5 * IQR
         df = df[(df[col] >= lower) & (df[col] <= upper)]
-    print(f"!!!!{len(df)}")
+   
     # Create geometry points
     df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
     
@@ -140,7 +133,6 @@ def create_interactive_map(gdf, html_path):
     map1.save(html_path)
 
  
-
 def main():
     """Main function to run the complete pipeline"""
     print("🚀 Starting data processing pipeline...")
