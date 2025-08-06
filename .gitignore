@@ -2,3 +2,10 @@
 /env
 .venv
 /venv
+
+*.csv
+garmin_sdk/*
+*.fit
+*.FIT.records.csv
+FitCSVTool.jar
+*.geojson
