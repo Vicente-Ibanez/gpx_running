@@ -83,11 +83,21 @@ def preprocess_df(df):
     # Convert the longitude and latitude to EPSG 4326
     df["latitude"] = df["latitude"].apply(point_converter)
     df["longitude"] = df["longitude"].apply(point_converter)
-    # Filter out invalid coordinates (very large or very small values)
+    # Filter out invalid coordinates (very large, very small, or near zero values)
     df = df[
         (df['latitude'] > -90) & (df['latitude'] < 90) &
-        (df['longitude'] > -180) & (df['longitude'] < 180)
+        (df['longitude'] > -180) & (df['longitude'] < 180) &
+        (df['latitude'].abs() > 1) & (df['longitude'].abs() > 1)
     ]
+
+    # Remove statistical outliers using IQR for latitude and longitude
+    for col in ['latitude', 'longitude']:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower = Q1 - 1.5 * IQR
+        upper = Q3 + 1.5 * IQR
+        df = df[(df[col] >= lower) & (df[col] <= upper)]
     print(f"!!!!{len(df)}")
     # Create geometry points
     df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
