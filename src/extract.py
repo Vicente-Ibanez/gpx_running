@@ -101,80 +101,33 @@ def preprocess_df(df):
 
 def create_interactive_map(gdf, html_path):
     """Create an interactive map of the data"""
-    map_type = "cadence"
-    gdf["cadence"] = gdf["cadence"].fillna(0)
-    gdf["cadence"] = gdf["cadence"].astype(float)
 
-    # Convert the geometry column into a GeoJson to be usable for folium
-    s = gdf["geometry"].to_json()
-    s = json.loads(s)
+    # Create a LineString from the points
+    from shapely.geometry import LineString
+    if len(gdf) < 2:
+        print("❌ Not enough points to create a line.")
+        return
+    # Sort by timestamp if available for correct order
+    if 'timestamp' in gdf.columns:
+        gdf = gdf.sort_values('timestamp')
+    line = LineString(gdf['geometry'].tolist())
 
-    # Change the location of id feature in geojson so it can be accessed
-    for id_spot in s["features"]:
-        id_spot["properties"]["id"] = str(id_spot["id"])
-        id_spot["properties"]["name"] = str(id_spot["id"])
+    # Create map centered on the mean of the points
+    mean_lat = gdf['geometry'].y.mean()
+    mean_lon = gdf['geometry'].x.mean()
+    map1 = folium.Map(location=[mean_lat, mean_lon], zoom_start=13)
 
-    # open a new geojson file and write the current one into it
-    with open('data/myfile.geojson', 'w') as f:
-        dump(s, f)
+    # Add the line to the map
+    folium.GeoJson(line, name='Run Path', style_function=lambda x: {
+        'color': 'blue',
+        'weight': 4,
+        'opacity': 0.8
+    }).add_to(map1)
 
-    # Convert index to an id column to be used to merge dfs
-    gdf["id"] = gdf.index
-    gdf["id"] = gdf["id"].astype(str)
-
-    # read in the geojson file
-    s2 = gpd.read_file('data/myfile.geojson', driver='GeoJSON')
-
-    
-    # use only certain column from the data file
-    gdf2 = gdf[[map_type, "id", "geometry"]].copy()
-
-    # Merge the two dfs (df and geojson)
-    gdf2 = gpd.sjoin(s2, gdf2, how='inner', predicate='within')
-
-    # get min and max of geojsons, cutting off obsurities/annolimies
-    min, max = gdf2[map_type].quantile([0.1,0.9]).apply(lambda x: round(x, 2))
-    print(min, "     ", max)
-    # Set color map based on distribution of speed
-    colormap = branca.colormap.LinearColormap(
-        colors=['black', '#ecca00','#ec9b00','#ec5300','#ec2400', '#ec0000'],
-        index=gdf2[map_type].quantile([.01,0.2,0.4,0.6,0.8]),
-        vmin=min,
-        vmax=max
-    )
-
-    # Assign caption type
-    if map_type == "speed":
-        colormap.caption="Speed Mi/Hr"
-    else:
-        colormap.caption="Steps/Min"
-
-    # Create map with initial location
-    map1 = folium.Map(location=[43.7696, 11.2558], zoom_start=12)
-
-    # Use the geojson to plot the runs w/ speed as the color and add to map
-    speed_geo = folium.GeoJson(gdf2,
-                            name='Track',
-                            style_function=lambda x: {                    
-                                'color': colormap(x['properties']
-                                [map_type]),                             
-                                'weight':3, 'fillOpacity':0.5
-                                }
-                            ).add_to(map1)
-   
-    # Add a LayerControl
     folium.LayerControl().add_to(map1)
-   
-    # And the Color Map legend
-    colormap.add_to(map1)
-   
-    # Save with descriptive name
-    if map_type == "speed":
-        # save map to html file
-        map1.save('data/index_speed.html')
-    else:
-        # save map to html file
-        map1.save('data/index_cadence.html')
+
+    # Save to the provided html_path
+    map1.save(html_path)
 
  
 
