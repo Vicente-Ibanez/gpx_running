@@ -145,36 +145,59 @@ def main():
     """Main function to run the complete pipeline"""
     print("🚀 Starting data processing pipeline...")
     
-    # Load data
+    # Process each CSV file separately and plot each as a separate line
     data_path = root_path + DATA_PATH
     print(f"📂 Loading data from: {data_path}")
-    raw_csv = load_data(data_path)
-    
-    if raw_csv.empty:
+    if not os.path.exists(data_path):
+        print("❌ Data path does not exist.")
+        return
+
+    files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
+    if not files:
         print("❌ No CSV files found in data/input/")
         return
-    
-    print(f"📊 Loaded {len(raw_csv)} rows of data")
-    
-    # Preprocess columns
-    preprocessed_df = preprocess_cols(raw_csv)
-    print(f"🔄 Preprocessed columns: {len(preprocessed_df)} rows")
-    
-    # Create geopandas dataframe
-    gdf = preprocess_df(preprocessed_df)
-    
-    if gdf.empty:
-        print("❌ No valid GPS data found")
+
+    # Create map object (centered on first file's mean location, fallback to default if needed)
+    map1 = None
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'black']
+    color_idx = 0
+    any_valid = False
+    for file in files:
+        file_path = os.path.join(data_path, file)
+        print(f"� Processing: {file}")
+        raw_csv = pd.read_csv(file_path)
+        preprocessed_df = preprocess_cols(raw_csv)
+        gdf = preprocess_df(preprocessed_df)
+        if gdf.empty or len(gdf) < 2:
+            print(f"❌ No valid GPS data in {file}")
+            continue
+        # Sort by timestamp if available
+        if 'timestamp' in gdf.columns:
+            gdf = gdf.sort_values('timestamp')
+        from shapely.geometry import LineString
+        line = LineString(gdf['geometry'].tolist())
+        # Create map if not yet created
+        if map1 is None:
+            mean_lat = gdf['geometry'].y.mean()
+            mean_lon = gdf['geometry'].x.mean()
+            map1 = folium.Map(location=[mean_lat, mean_lon], zoom_start=13)
+        # Add the line to the map
+        folium.GeoJson(line, name=file, style_function=lambda x, c=colors[color_idx % len(colors)]: {
+            'color': c,
+            'weight': 4,
+            'opacity': 0.8
+        }).add_to(map1)
+        color_idx += 1
+        any_valid = True
+
+    if not any_valid:
+        print("❌ No valid GPS data found in any file.")
         return
-    
-    # Create static map
-    output_dir = os.path.join(root_path, "data", "plots")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Create interactive map
+
+    folium.LayerControl().add_to(map1)
+    # Save interactive map
     html_path = os.path.join(root_path, "data", "index_cadence.html")
-    create_interactive_map(gdf, html_path)
-    
+    map1.save(html_path)
     print("✅ Pipeline complete!")
 
 if __name__ == "__main__":
