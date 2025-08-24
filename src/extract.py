@@ -151,7 +151,7 @@ def create_interactive_map(gdf, map, color):
         }
     ).add_to(map)
 
-    folium.LayerControl().add_to(map)
+    # folium.LayerControl().add_to(map)
 
     return map
 
