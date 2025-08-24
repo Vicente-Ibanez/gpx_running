@@ -10,7 +10,7 @@ DATA_PATH = "/data/input"
 # Create columns correct names
 CORRECT_COLS = [
     "type","drop","drop","drop",
-    "timestamp","drop","drop","latitude",
+    "timestamp","drop","type2","latitude",
     "drop","drop","longitude",
     "drop","drop","distance","drop",
     "drop","speed","drop","drop",
@@ -40,7 +40,11 @@ def preprocess_cols(df):
     # Drop unused columns
     df = df.drop(columns="drop")
     df = df.dropna(axis=0)
-    df = df[df['type'] == 'Data'].copy()
+    df = df[(df['type'] == 'Data') & (df['type2'] == 'position_lat')].copy()
+    df.drop(columns=["type2"], inplace=True)
+    
+    df["latitude"] = pd.to_numeric(df["latitude"], errors='coerce')
+    df["longitude"] = pd.to_numeric(df["longitude"], errors='coerce')
     return df
 
 def point_converter(meters_coords):
@@ -70,7 +74,7 @@ def preprocess_df(df):
     df = df.dropna(subset=['latitude', 'longitude'])
     print(f"!!!!{len(df)}")
 
-    # # Convert speed from m/s to mph
+    # Convert speed from m/s to mph
     df['speed_mph'] = df['speed'] * 2.236936
     
     # Convert the longitude and latitude to EPSG 4326
@@ -79,18 +83,18 @@ def preprocess_df(df):
     # Filter out invalid coordinates (very large, very small, or near zero values)
     df = df[
         (df['latitude'] > -90) & (df['latitude'] < 90) &
-        (df['longitude'] > -180) & (df['longitude'] < 180) &
-        (df['latitude'].abs() > 1) & (df['longitude'].abs() > 1)
+        (df['longitude'] > -180) & (df['longitude'] < 180) # &
+        # (df['latitude'].abs() > 1) & (df['longitude'].abs() > 1)
     ]
 
     # Remove statistical outliers using IQR for latitude and longitude
-    for col in ['latitude', 'longitude']:
-        Q1 = df[col].quantile(0.25)
-        Q3 = df[col].quantile(0.75)
-        IQR = Q3 - Q1
-        lower = Q1 - 1.5 * IQR
-        upper = Q3 + 1.5 * IQR
-        df = df[(df[col] >= lower) & (df[col] <= upper)]
+    # for col in ['latitude', 'longitude']:
+    #     Q1 = df[col].quantile(0.25)
+    #     Q3 = df[col].quantile(0.75)
+    #     IQR = Q3 - Q1
+    #     lower = Q1 - 1.5 * IQR
+    #     upper = Q3 + 1.5 * IQR
+    #     df = df[(df[col] >= lower) & (df[col] <= upper)]
    
     # Create geometry points
     df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
